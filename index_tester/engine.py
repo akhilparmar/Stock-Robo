@@ -26,10 +26,11 @@ from index_tester.strategy import (
     decide_entry,
     index_stop_hit,
     index_target_hit,
+    next_premium_trail,
     premium_stop_hit,
-    profit_r,
+    premium_take_hit,
+    premium_trail_hit,
     supertrend_exit_reason,
-    trailing_stop_for_stage,
 )
 
 logger = logging.getLogger("index_tester")
@@ -179,9 +180,43 @@ class Engine:
             self._exit(position, "clock")
             return
         premium = self._option_ltp(position)
-        if premium is not None and premium_stop_hit(float(position["buy_premium"]), premium):
-            self._exit(position, "premium_stop", premium=premium)
-            return
+        if premium is not None:
+            trail = next_premium_trail(
+                float(position["buy_premium"]),
+                float(premium),
+                peak_premium=position.get("peak_premium"),
+                premium_stop=position.get("premium_stop"),
+                trail_stage=int(position.get("trail_stage") or 0),
+            )
+            if trail.changed:
+                moved = db.update_premium_trail(
+                    int(position["id"]),
+                    peak_premium=trail.peak_premium,
+                    premium_stop=trail.premium_stop,
+                    stage=trail.trail_stage,
+                )
+                if moved:
+                    position = moved
+                    if trail.note:
+                        db.insert_signal(
+                            self.snapshot.get("bar_ts"),
+                            "protect",
+                            "premium_trail",
+                            trail.note,
+                        )
+            if int(position.get("trail_stage") or 0) >= 1 and premium_trail_hit(
+                float(premium), position.get("premium_stop")
+            ):
+                self._exit(position, "premium_trail", premium=premium)
+                return
+            if premium_take_hit(float(position["buy_premium"]), float(premium)):
+                self._exit(position, "premium_target", premium=premium)
+                return
+            if int(position.get("trail_stage") or 0) < 1 and premium_stop_hit(
+                float(position["buy_premium"]), premium
+            ):
+                self._exit(position, "premium_stop", premium=premium)
+                return
         index_px = self._index_ltp
         stop = position.get("index_stop")
         target = position.get("index_target")
@@ -195,44 +230,6 @@ class Engine:
         if index_px is not None and stop is not None and index_stop_hit(position["side"], index_px, float(stop)):
             self._exit(position, "index_stop", premium=premium, index_px=index_px)
             return
-        entry = position.get("index_at_buy")
-        risk = position.get("risk_distance")
-        if (
-            index_px is not None
-            and entry is not None
-            and risk is not None
-            and float(position.get("reward_ratio") or 1) > 1
-        ):
-            current_r = profit_r(
-                position["side"], index_px, float(entry), float(risk)
-            )
-            current_stage = int(position.get("trail_stage") or 0)
-            next_stage = 2 if current_r >= 1.5 else 1 if current_r >= 1.0 else 0
-            if next_stage > current_stage:
-                new_stop = trailing_stop_for_stage(
-                    position["side"],
-                    float(entry),
-                    float(risk),
-                    next_stage,
-                )
-                moved = db.tighten_trailing_stop(
-                    int(position["id"]),
-                    stop=round(new_stop, 2),
-                    stage=next_stage,
-                )
-                if moved:
-                    position = moved
-                    protection = (
-                        f"+0.5R ({new_stop:,.2f})"
-                        if next_stage == 2
-                        else f"breakeven ({new_stop:,.2f})"
-                    )
-                    db.insert_signal(
-                        self.snapshot.get("bar_ts"),
-                        "protect",
-                        "trailing_stop",
-                        f"Nifty reached +{current_r:.2f}R; stop tightened to {protection}.",
-                    )
         view = self._view
         if view is None or not view.ready or view.bar_close is None:
             return
@@ -490,6 +487,8 @@ def _position_view(position: dict[str, Any] | None, option_ltp: float | None) ->
         "market_regime": position.get("market_regime"),
         "breakeven_moved": bool(position.get("breakeven_moved")),
         "trail_stage": int(position.get("trail_stage") or 0),
+        "peak_premium": position.get("peak_premium"),
+        "premium_stop": position.get("premium_stop"),
         "entry_reason": REASONS.get(position.get("entry_reason") or "", position.get("entry_reason")),
         "opened_at": position["opened_at"],
         "ltp": option_ltp,

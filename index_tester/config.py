@@ -14,6 +14,10 @@ MAX_BUDGET = 20_000.0
 STRIKE_STEP = 50
 ADX_MIN = 22.0
 PREMIUM_STOP_PCT = 35.0
+# Option-premium profit management (Nifty tester only).
+PREMIUM_TRAIL_PCT = 1.0  # trailing SL sits 1% below the peak premium
+PREMIUM_FIRST_LOCK_PCT = 1.0  # once premium reaches +1%, lock that floor
+PREMIUM_TAKE_PCT = 8.0  # hard take-profit: bank a smaller premium gain
 MARKET_OPEN_MINUTE = 9 * 60 + 15
 FLAT_MINUTE = 15 * 60 + 15
 ENTRY_WINDOWS = ((9 * 60 + 30, 11 * 60 + 30), (13 * 60 + 15, 14 * 60 + 45))

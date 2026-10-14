@@ -175,11 +175,13 @@ function render(data) {
       <span>Now ${position.ltp == null ? "—" : points.format(position.ltp)}
         · P&L <span class="${pnlClass}">${pnl == null ? "—" : money.format(pnl)}</span></span>
       <span>Nifty target ${show(position.index_target)} (${show(position.reward_ratio)}R)
-        · stop ${show(position.index_stop)}${
+        · index stop ${show(position.index_stop)}</span>
+      <span>Premium trail ${position.premium_stop == null ? "—" : points.format(position.premium_stop)}
+        · peak ${position.peak_premium == null ? "—" : points.format(position.peak_premium)}${
           position.trail_stage >= 2
-            ? " · +0.5R profit locked"
+            ? " · +1% locked"
             : position.trail_stage >= 1
-              ? " · breakeven protected"
+              ? " · breakeven locked"
               : ""
         }</span>
       <span>Regime ${position.market_regime || "—"} · risk distance ${show(position.risk_distance)} Nifty points</span>

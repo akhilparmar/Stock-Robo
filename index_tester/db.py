@@ -100,6 +100,8 @@ def init_db() -> None:
             "market_regime": "TEXT",
             "breakeven_moved": "INTEGER NOT NULL DEFAULT 0",
             "trail_stage": "INTEGER NOT NULL DEFAULT 0",
+            "peak_premium": "REAL",
+            "premium_stop": "REAL",
         }
         for name, sql_type in trade_additions.items():
             if name not in trade_cols:
@@ -233,8 +235,9 @@ def insert_trade(payload: dict[str, Any]) -> dict[str, Any]:
             INSERT INTO trades (
                 trade_date, side, strike, expiry, trd_symbol, token, exchange_segment,
                 lot_size, buy_premium, debit, index_at_buy, index_stop, index_target,
-                risk_distance, reward_ratio, market_regime, entry_reason, status, opened_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)
+                risk_distance, reward_ratio, market_regime, entry_reason, status, opened_at,
+                peak_premium, premium_stop, trail_stage
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, 0)
             """,
             (
                 payload["trade_date"],
@@ -255,6 +258,8 @@ def insert_trade(payload: dict[str, Any]) -> dict[str, Any]:
                 payload.get("market_regime"),
                 payload.get("entry_reason"),
                 payload["opened_at"],
+                payload.get("peak_premium", payload["buy_premium"]),
+                payload.get("premium_stop"),
             ),
         )
         row = conn.execute("SELECT * FROM trades WHERE id = ?", (cur.lastrowid,)).fetchone()
@@ -267,6 +272,7 @@ def tighten_trailing_stop(
     stop: float,
     stage: int,
 ) -> dict[str, Any] | None:
+    """Legacy index-stop trail (unused by live premium trail)."""
     with _lock, connect() as conn:
         conn.execute(
             """
@@ -275,6 +281,43 @@ def tighten_trailing_stop(
             WHERE id = ? AND status = 'open' AND COALESCE(trail_stage, 0) < ?
             """,
             (stop, stage, trade_id, stage),
+        )
+        row = conn.execute("SELECT * FROM trades WHERE id = ?", (trade_id,)).fetchone()
+    return _row(row)
+
+
+def update_premium_trail(
+    trade_id: int,
+    *,
+    peak_premium: float,
+    premium_stop: float | None,
+    stage: int,
+) -> dict[str, Any] | None:
+    with _lock, connect() as conn:
+        conn.execute(
+            """
+            UPDATE trades
+            SET peak_premium = ?,
+                premium_stop = ?,
+                trail_stage = ?,
+                breakeven_moved = CASE WHEN ? >= 1 THEN 1 ELSE breakeven_moved END
+            WHERE id = ? AND status = 'open'
+              AND (
+                COALESCE(peak_premium, 0) < ?
+                OR COALESCE(premium_stop, 0) < COALESCE(?, 0)
+                OR COALESCE(trail_stage, 0) < ?
+              )
+            """,
+            (
+                peak_premium,
+                premium_stop,
+                stage,
+                stage,
+                trade_id,
+                peak_premium,
+                premium_stop,
+                stage,
+            ),
         )
         row = conn.execute("SELECT * FROM trades WHERE id = ?", (trade_id,)).fetchone()
     return _row(row)

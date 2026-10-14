@@ -19,7 +19,10 @@ from index_tester.strategy import (
     index_stop,
     index_stop_hit,
     index_target_hit,
+    next_premium_trail,
     premium_stop_hit,
+    premium_take_hit,
+    premium_trail_hit,
     profit_r,
     supertrend_exit_reason,
     trailing_stop_for_stage,
@@ -114,22 +117,22 @@ class RuleTests(unittest.TestCase):
     def test_adaptive_trade_plans(self) -> None:
         developing = build_trade_plan("CE", 24000, 20, 25)
         self.assertEqual(developing.regime, "developing")
-        self.assertEqual(developing.reward_ratio, 1.0)
+        self.assertEqual(developing.reward_ratio, 0.5)
         self.assertAlmostEqual(developing.stop, 23982)
-        self.assertAlmostEqual(developing.target, 24018)
+        self.assertAlmostEqual(developing.target, 24009)
 
         trending = build_trade_plan("PE", 24000, 20, 32)
         self.assertEqual(trending.regime, "trending")
-        self.assertEqual(trending.reward_ratio, 1.5)
+        self.assertEqual(trending.reward_ratio, 0.75)
         self.assertAlmostEqual(trending.stop, 24022)
-        self.assertAlmostEqual(trending.target, 23967)
+        self.assertAlmostEqual(trending.target, 23983.5)
 
         strong = build_trade_plan("CE", 24000, 20, 45)
         self.assertEqual(strong.regime, "strong_trend")
-        self.assertEqual(strong.reward_ratio, 2.0)
+        self.assertEqual(strong.reward_ratio, 1.0)
         self.assertAlmostEqual(strong.stop, 23975)
-        self.assertAlmostEqual(strong.target, 24050)
-        self.assertTrue(index_target_hit("CE", 24050, strong.target))
+        self.assertAlmostEqual(strong.target, 24025)
+        self.assertTrue(index_target_hit("CE", 24025, strong.target))
         self.assertTrue(breakeven_trigger_hit("CE", 24025, 24000, 25))
         self.assertFalse(breakeven_trigger_hit("CE", 24024, 24000, 25))
 
@@ -140,6 +143,39 @@ class RuleTests(unittest.TestCase):
         self.assertAlmostEqual(trailing_stop_for_stage("CE", 24000, 25, 2), 24012.5)
         self.assertAlmostEqual(trailing_stop_for_stage("PE", 24000, 25, 1), 24000)
         self.assertAlmostEqual(trailing_stop_for_stage("PE", 24000, 25, 2), 23987.5)
+
+    def test_premium_trail_locks_then_trails(self) -> None:
+        buy = 100.0
+        first = next_premium_trail(
+            buy, 100.5, peak_premium=buy, premium_stop=None, trail_stage=0
+        )
+        self.assertEqual(first.trail_stage, 1)
+        self.assertAlmostEqual(first.premium_stop, 100.0)
+        self.assertFalse(premium_trail_hit(100.5, first.premium_stop))
+
+        locked = next_premium_trail(
+            buy,
+            101.2,
+            peak_premium=first.peak_premium,
+            premium_stop=first.premium_stop,
+            trail_stage=first.trail_stage,
+        )
+        self.assertGreaterEqual(locked.trail_stage, 2)
+        self.assertGreaterEqual(locked.premium_stop, 101.0)
+
+        peaked = next_premium_trail(
+            buy,
+            110.0,
+            peak_premium=locked.peak_premium,
+            premium_stop=locked.premium_stop,
+            trail_stage=locked.trail_stage,
+        )
+        self.assertAlmostEqual(peaked.peak_premium, 110.0)
+        self.assertAlmostEqual(peaked.premium_stop, 108.9)
+        self.assertTrue(premium_trail_hit(108.9, peaked.premium_stop))
+        self.assertFalse(premium_trail_hit(109.0, peaked.premium_stop))
+        self.assertTrue(premium_take_hit(100.0, 108.0))
+        self.assertFalse(premium_take_hit(100.0, 107.0))
 
     def test_cpr_and_opening_range(self) -> None:
         top, bottom, _pivot = cpr(120, 80, 110)
