@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Paper Option Tester</title>
+  <link rel="stylesheet" href="/static/styles.css?v=trail1" />
+</head>
+<body>
+  <header class="top">
+    <div>
+      <p class="brand">Paper Option Tester</p>
+      <p class="sub">Paper only · Live auto · 09:40 timed · −5% SL · +5% then +1% trail (EOD 15:10)</p>
+    </div>
+    <div class="top-actions">
+      <a class="nav-link" href="/nifty/">Nifty index</a>
+      <a class="nav-link" href="/oi-spurts/">OI spurts</a>
+      <a class="nav-link" href="/suggest">NSE heatmap →</a>
+      <span id="paperBadge" class="badge">PAPER</span>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Strategy windows">
+    <button type="button" class="tab active" data-slot="t0920" role="tab" aria-selected="true">Live · auto · trail</button>
+    <button type="button" class="tab" data-slot="t0940" role="tab" aria-selected="false">09:40 · trail</button>
+  </nav>
+
+  <main class="wrap">
+    <section class="card setup">
+      <h2 id="setupTitle">1. Live auto trading</h2>
+      <p id="setupHint" class="hint">Fully automatic — no button buy. Pending overnight opens are finished first next day before any new buy.</p>
+      <div id="autoLiveBox" class="auto-live-box">
+        <p id="autoLiveStatus" class="status">Auto-scan ON · every 5 min · 09:15–15:00 · overnight opens finish first next day.</p>
+        <p class="hint">Keep this app running. If a sell fails, the same option stays open and is completed next morning before any new buy.</p>
+      </div>
+      <div id="manualSetup" class="manual-setup hidden">
+        <div class="setup-row">
+          <label class="grow">Option name
+            <input id="optionName" placeholder="WIPRO call 160" autocapitalize="characters" />
+          </label>
+          <button id="resolveBtn" class="primary setup-btn">Save &amp; arm</button>
+        </div>
+        <p id="resolveStatus" class="status"></p>
+      </div>
+      <div id="resolvedBox" class="resolved hidden">
+        <span><strong>Name</strong> <span id="callName">—</span></span>
+        <span><strong>Expiry</strong> <span id="expiryVal">—</span></span>
+        <span><strong>Qty</strong> <span id="qtyVal">—</span></span>
+        <span><strong>Contract</strong> <span id="optSym">—</span></span>
+        <span><strong>Stock</strong> <span id="stockSym">—</span></span>
+      </div>
+      <div id="planBox" class="resolved hidden">
+        <span><strong>Plan</strong> <span id="planText">—</span></span>
+      </div>
+    </section>
+
+    <section class="card prices">
+      <h2>Live prices</h2>
+      <div class="price-grid">
+        <div class="price-box">
+          <p class="price-label">Stock (ref)</p>
+          <p id="stockLtp" class="price-value">—</p>
+          <p id="stockName" class="price-meta">—</p>
+        </div>
+        <div class="price-box accent">
+          <p class="price-label">Option</p>
+          <p id="optionLtp" class="price-value">—</p>
+          <p id="optionNameMeta" class="price-meta">—</p>
+        </div>
+      </div>
+      <p id="quoteUpdated" class="hint quote-hint">Updated: —</p>
+    </section>
+
+    <section class="card today-card">
+      <h2>2. Today · <span id="slotLabel">Live · auto</span></h2>
+      <p id="todayHint" class="hint"><span id="todayHintPrefix">Auto buy/sell · exit at</span> <span id="buyTimeWrap" class="hidden"><strong id="buyTimeLabel">09:40</strong> · exit at </span><strong id="exitModeLabel">+/-5%</strong> (TP/SL) · EOD <strong id="eodLabel">15:10</strong></p>
+      <p id="countdown" class="countdown">—</p>
+      <p id="exitLevels" class="hint">TP / SL: —</p>
+
+      <div id="todaySingle" class="today">
+        <div class="today-stat"><span class="k">Status</span><span id="todayStatus">—</span></div>
+        <div class="today-stat"><span class="k">Buy</span><span id="todayBuy">—</span></div>
+        <div class="today-stat"><span class="k">Sell / Exit</span><span id="todaySell">—</span></div>
+        <div class="today-stat"><span class="k">Exit reason</span><span id="todayExitReason">—</span></div>
+        <div class="today-stat"><span class="k">Spend today</span><span id="todaySpend">—</span></div>
+        <div class="today-stat"><span class="k">P&amp;L</span><span id="todayPnl">—</span></div>
+      </div>
+      <div id="todayMulti" class="today-multi hidden"></div>
+      <p id="todayFail" class="error"></p>
+    </section>
+
+    <p class="overall-pnl-banner">
+      Today P&amp;L · <span id="pnlSlotLabel">Live · auto</span> <strong id="todayPnlBanner">—</strong>
+      <span class="pnl-sep">·</span>
+      Overall <strong id="totalPnl">—</strong>
+    </p>
+
+    <section class="card hist-card">
+      <h2>History · <span id="histSlotLabel">Live · auto</span></h2>
+      <div id="history" class="history"></div>
+    </section>
+  </main>
+
+  <p id="toast" class="toast hidden"></p>
+  <script src="/static/app.js?v=trail1"></script>
+</body>
+</html>

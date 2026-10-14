@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0e1714" />
+  <title>OI Spurts Paper</title>
+  <script>
+    window.OI_ROOT = location.pathname.indexOf("/oi-spurts") === 0 ? "/oi-spurts" : "";
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = window.OI_ROOT + "/static/styles.css";
+    document.head.appendChild(css);
+  </script>
+</head>
+<body>
+  <header class="top">
+    <div>
+      <p class="brand">OI Spurts Paper</p>
+      <p class="sub">Nifty 200 top 5 · OI spurts · ATM call or put · paper only</p>
+      <p id="aliveLine" class="alive">Server · checking…</p>
+    </div>
+    <div class="top-actions">
+      <button id="wakeBtn" class="ghost" type="button">Keep screen on</button>
+      <a class="nav-link" href="/">Stock options</a>
+      <a class="nav-link" href="/nifty/">Nifty index</a>
+      <span class="badge">PAPER</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h2>Rules</h2>
+      <ul class="rules">
+        <li>Top 5 Nifty 200 gainers and top 5 losers, by percent change.</li>
+        <li>The stock must also be in the top 20 names on NSE OI spurts, ranked by percent change in open interest.</li>
+        <li>Gainer: open above yesterday’s close, and the 9:15–9:20 candle green → ATM call. Loser: open below yesterday’s close, and that candle red → ATM put.</li>
+        <li>TA gates (same idea as the stock-option suggest page, on 5‑min bars): EMA9/21/50 stack, SMA20, RSI band, MACD histogram side, candle body ≥45%, volume ≥0.7×, and minimum OI %.</li>
+        <li>Passed names are scored. Only the top 2 scores are paper-bought.</li>
+        <li>Stock stop is the tighter of candle-open and 1.25% from entry. Target starts 1:1, then trails.</li>
+        <li>Extra exits: option premium −25%, and time-cut at 11:00 if the stock is still underwater. Flat at 15:15.</li>
+        <li>Auto buys only from 9:20 to 9:24 IST.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Kotak session</h2>
+      <p class="hint">Same <code>.env</code> and morning login as the other paper apps.</p>
+      <div class="row">
+        <label>TOTP <input id="totp" inputmode="numeric" autocomplete="one-time-code" /></label>
+        <label>MPIN <input id="mpin" type="password" inputmode="numeric" autocomplete="off" /></label>
+        <button id="connectBtn" class="primary" type="button">Connect</button>
+      </div>
+      <p id="neoLine" class="status">Checking the token…</p>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <h2>Auto paper <span id="autoBadge" class="pill off">OFF</span></h2>
+        <div class="row">
+          <button id="autoBtn" class="primary" type="button">Pause &amp; flatten</button>
+          <button id="paperTodayBtn" class="primary" type="button">Redo today’s entries</button>
+          <button id="refreshBtn" type="button">Refresh</button>
+        </div>
+      </div>
+      <p id="helpLine" class="hint">—</p>
+      <p id="runLine" class="status">Checking…</p>
+      <p id="errorLine" class="error" hidden></p>
+      <div id="score" class="score"></div>
+    </section>
+
+    <section class="card">
+      <h2>Top 5 and OI overlap</h2>
+      <p id="boardMeta" class="hint">Waiting for the NSE lists.</p>
+      <div class="split">
+        <div>
+          <h3>Gainers</h3>
+          <div id="gainers"></div>
+        </div>
+        <div>
+          <h3>Losers</h3>
+          <div id="losers"></div>
+        </div>
+      </div>
+      <h3 class="spaced">TA shortlist</h3>
+      <div id="candidates"></div>
+    </section>
+
+    <section class="card">
+      <h2>Open paper options</h2>
+      <div id="positions">No open option.</div>
+    </section>
+
+    <section class="card">
+      <h2>Log</h2>
+      <div id="signals"></div>
+    </section>
+
+    <section class="card">
+      <h2>History</h2>
+      <div id="trades"></div>
+    </section>
+  </main>
+  <script>
+    var js = document.createElement("script");
+    js.src = window.OI_ROOT + "/static/app.js";
+    document.body.appendChild(js);
+  </script>
+</body>
+</html>

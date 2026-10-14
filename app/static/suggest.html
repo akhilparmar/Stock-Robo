@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Stock Suggest · NSE Heatmap + TA</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="top">
+    <div>
+      <p class="brand">Stock Suggest</p>
+      <p class="sub">NSE heatmap · FO options only · top 3 each side · one loser + one winner</p>
+    </div>
+    <div class="top-actions">
+      <a class="nav-link" href="/">Stock options</a>
+      <a class="nav-link" href="/nifty/">Nifty index</a>
+      <a class="nav-link" href="/oi-spurts/">OI spurts</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h2>How it picks</h2>
+      <ol class="rules">
+        <li>Fetch NSE sectoral indices (heatmap).</li>
+        <li>Take the <strong>lowest</strong> and <strong>highest</strong> sectors.</li>
+        <li>Keep only stocks that have <strong>NSE FO options</strong> (Neo scrip master).</li>
+        <li>Lowest: optionable stocks down <strong>0% to −3%</strong> → top 3 losers.</li>
+        <li>Highest: optionable stocks up <strong>0% to +3%</strong> → top 3 winners.</li>
+        <li>If the extreme sector has no FO names in band (e.g. Media), try the <strong>next</strong> sectors.</li>
+        <li>Daily TA picks <strong>one best loser</strong> and <strong>one best winner</strong>.</li>
+      </ol>
+      <div class="setup-row">
+        <button id="refreshBtn" class="primary setup-btn">Find stocks now</button>
+      </div>
+      <p id="status" class="status">Tap to fetch live NSE + TA data.</p>
+    </section>
+
+    <section class="card suggest-picks">
+      <h2>Selected · one loser + one winner</h2>
+      <div class="price-grid">
+        <div class="price-box down">
+          <p class="price-label">Best loser (bounce)</p>
+          <p id="loserSym" class="price-value">—</p>
+          <p id="loserMeta" class="price-meta">—</p>
+          <p id="loserReasons" class="hint"></p>
+        </div>
+        <div class="price-box up">
+          <p class="price-label">Best winner (continuation)</p>
+          <p id="winnerSym" class="price-value">—</p>
+          <p id="winnerMeta" class="price-meta">—</p>
+          <p id="winnerReasons" class="hint"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Technical scores</h2>
+      <p class="hint">Top 3 losers + top 3 winners. Best score on each side is selected.</p>
+      <div id="taList" class="history"></div>
+    </section>
+
+    <section class="card">
+      <h2>Heatmap shortlist</h2>
+      <div class="price-grid">
+        <div class="price-box down">
+          <p class="price-label">Top losers · 0% to −3%</p>
+          <div id="topLosers" class="history"></div>
+        </div>
+        <div class="price-box up">
+          <p class="price-label">Top winners · 0% to +3%</p>
+          <div id="topWinners" class="history"></div>
+        </div>
+      </div>
+      <div class="sector-pair" style="margin-top:12px">
+        <div>
+          <p class="price-label">Lowest sector</p>
+          <p id="lowSector" class="sector-name">—</p>
+        </div>
+        <div>
+          <p class="price-label">Highest sector</p>
+          <p id="highSector" class="sector-name">—</p>
+        </div>
+      </div>
+      <div id="skipped" class="hint"></div>
+    </section>
+
+    <section class="card">
+      <h2>All sectoral (low → high)</h2>
+      <div id="sectorList" class="history"></div>
+    </section>
+  </main>
+
+  <p id="toast" class="toast hidden"></p>
+  <script src="/static/suggest.js"></script>
+</body>
+</html>

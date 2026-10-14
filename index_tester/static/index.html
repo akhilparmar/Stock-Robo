@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#10151c" />
+  <title>Nifty Index Option Tester</title>
+  <script>
+    window.NIFTY_ROOT = location.pathname.indexOf("/nifty") === 0 ? "/nifty" : "";
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = window.NIFTY_ROOT + "/static/styles.css";
+    document.head.appendChild(css);
+  </script>
+</head>
+<body>
+  <header class="top">
+    <div>
+      <p class="brand">Nifty Index Option Tester</p>
+      <p class="sub">Paper only · Buy a Nifty call or put · Never write an option · Budget ₹20,000</p>
+      <p id="aliveLine" class="alive">Server · checking…</p>
+    </div>
+    <div class="top-actions">
+      <button id="wakeBtn" class="wake-btn" type="button">Keep screen on</button>
+      <a class="nav-link" href="/">Stock options</a>
+      <a class="nav-link" href="/oi-spurts/">OI spurts</a>
+      <span class="badge">PAPER</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h2>Rules</h2>
+      <ul class="rules">
+        <li>Signals come from Nifty candles. The order is one at-the-money weekly call or put.</li>
+        <li>Buy only. The later sell closes that same contract. A short option is never opened.</li>
+        <li>One lot, and only if the premium times the lot size is within ₹20,000.</li>
+        <li>Call: above VWAP, both EMAs up, and a break of the opening range or CPR top. Put is the mirror. ADX must be at least 22.</li>
+        <li>Many trades allowed, but only one open option at a time (max ₹20,000 debit).</li>
+        <li>Entries 9:30–11:30 and 13:15–14:45. Stop and target adapt to Nifty ATR + ADX: about <strong>1R</strong> in developing trends, <strong>1.5R</strong> in trends, and <strong>2R</strong> in strong trends.</li>
+        <li>Trailing protection: at +1R the stop moves to breakeven; at +1.5R it locks +0.5R profit. The stop never loosens.</li>
+        <li>Supertrend flip, 15:15 flat, and a −35% premium emergency guard remain active.</li>
+        <li>Paper auto turns on by itself at market open (09:15). Stop only if you want to pause for today.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Kotak session</h2>
+      <p class="hint">Connect once in the morning. The session is saved on this PC for today and shared with the stock page. Quotes also use the access token in <code>.env</code>.</p>
+      <div class="row">
+        <label>TOTP <input id="totp" inputmode="numeric" autocomplete="one-time-code" /></label>
+        <label>MPIN <input id="mpin" type="password" inputmode="numeric" autocomplete="off" /></label>
+        <button id="connectBtn" class="primary" type="button">Connect</button>
+      </div>
+      <p id="neoLine" class="status">Checking the token…</p>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <h2>Auto paper <span id="autoBadge" class="auto-badge off">OFF</span></h2>
+        <div class="row">
+          <button id="startBtn" class="primary" type="button">Resume today</button>
+          <button id="stopBtn" class="danger" type="button">Pause today</button>
+          <button id="refreshBtn" type="button">Refresh</button>
+        </div>
+      </div>
+      <p id="runLine" class="status">Paper auto starts at 09:15 IST on its own.</p>
+      <p id="reasonLine" class="reason">—</p>
+      <div id="biasGrid" class="grid"></div>
+    </section>
+
+    <section class="card">
+      <h2>Open position</h2>
+      <div id="position">No open Nifty option.</div>
+    </section>
+
+    <section class="card">
+      <h2>Score</h2>
+      <div id="score" class="grid"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>When</th>
+              <th>Contract</th>
+              <th>Buy</th>
+              <th>Sell</th>
+              <th>P&amp;L</th>
+              <th>Exit</th>
+            </tr>
+          </thead>
+          <tbody id="trades"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Decisions</h2>
+      <ul id="signals" class="signals"></ul>
+    </section>
+  </main>
+  <script>
+    var script = document.createElement("script");
+    script.src = window.NIFTY_ROOT + "/static/app.js";
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>
